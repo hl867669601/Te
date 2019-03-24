@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.study.dao.ArticleDao">
+
+    <resultMap id="articleMap" type="com.study.entity.Article">
+        <id property="articleId" column="article_id"></id>
+        <result property="articleTitle" column="article_title"></result>
+        <result property="articleContent" column="article_content"></result>
+        <result property="articleClicks" column="article_clicks"></result>
+        <result property="articleStatus" column="article_status"></result>
+        <result property="articleCreateTime" column="article_create_time"></result>
+        <result property="articleLastUpdateTime" column="article_last_update_time"></result>
+        <result property="articlePraisePoints" column="article_praise_points"></result>
+
+        <association property="articleTag"  javaType="com.study.entity.Tag">
+            <id property="tagId" column="tag_id"></id>
+            <result property="tagName" column="tag_name"></result>
+        </association>
+        <association property="articleUser"  javaType="com.study.entity.User">
+            <id property="userId" column="user_id"></id>
+            <result property="userName" column="user_name"></result>
+        </association>
+    </resultMap>
+
+
+    <insert id="saveArticle" parameterType="com.study.entity.Article">
+        INSERT INTO article(
+        article_title,
+        article_content,
+        article_clicks,
+        article_user_id,
+        article_tag_id,
+        article_status,
+        article_create_time,
+        article_last_update_time,
+        article_praise_points
+        )
+        VALUES(
+        #{article.articleTitle},
+        #{article.articleContent},
+        #{article.articleClicks},
+        #{article.articleUser.userId},
+        #{article.articleTag.tagId},
+        #{article.articleStatus},
+        #{article.articleCreateTime},
+        #{article.articleLastUpdateTime},
+        #{article.articlePraisePoints} )
+    </insert>
+    <select id="findAllArticle" resultMap="articleMap">
+       SELECT
+       a.article_id,
+       a.article_title,
+       a.article_content,
+       a.article_clicks,
+       a.article_status,
+       a.article_create_time,
+       a.article_last_update_time,
+       a.article_praise_points,
+       t.tag_id,
+       t.tag_name,
+       u.user_name,
+       u.user_id
+       FROM
+       article AS a ,
+       tag AS t,
+       user AS u
+        WHERE a.article_tag_id = t.tag_id AND a.article_user_id = u.user_id AND a.article_status != 3
+    </select>
+    <select id="findById" resultMap="articleMap">
+        SELECT
+        a.article_id,
+        a.article_title,
+        a.article_content,
+        a.article_clicks,
+        a.article_status,
+        a.article_create_time,
+        a.article_last_update_time,
+        a.article_praise_points,
+        t.tag_id,
+        t.tag_name,
+        u.user_name,
+        u.user_id
+        FROM
+        article AS a ,
+        tag AS t,
+        user AS u
+        WHERE a.article_tag_id = t.tag_id AND a.article_user_id = u.user_id AND a.article_id=#{articleId}
+    </select>
+
+    <update id="updateArticleStatus">
+        UPDATE article
+        SET
+        article_status = #{status},
+        article_last_update_time = #{date}
+        WHERE
+        article_id = #{articleId}
+    </update>
+    <update id="updateArticle" parameterType="com.study.entity.Article">
+        UPDATE article
+        <set>
+            <if test="article.articleTitle != null and article.articleTitle != '' ">
+                article_title = #{article.articleTitle},
+            </if>
+            <if test="article.articleContent != null and article.articleContent != '' ">
+                article_content = #{article.articleContent},
+            </if>
+            <if test="article.articleLastUpdateTime != null  ">
+                article_last_update_time = #{article.articleLastUpdateTime},
+            </if>
+            <if test="article.articleStatus != null  ">
+                article_status = #{article.articleStatus},
+            </if>
+            <if test="article.articleTag.tagId !=null">
+                article_tag_id = #{article.articleTag.tagId},
+            </if>
+        </set>
+        WHERE article_id = #{article.articleId}
+    </update>
+    <select id="findAllSize" resultType="int">
+        SELECT COUNT(article_id)
+        FROM article
+        <where>
+            <if test="queryString!=null and queryString!='' ">
+                AND article_title LIKE '%${queryString}%'
+            </if>
+        </where>
+    </select>
+
+    <select id="queryByPage" resultMap="articleMap">
+         SELECT
+        a.article_id,
+        a.article_title,
+        a.article_content,
+        a.article_clicks,
+        a.article_status,
+        a.article_create_time,
+        a.article_last_update_time,
+        a.article_praise_points,
+        t.tag_id,
+        t.tag_name,
+        u.user_name,
+        u.user_id
+        FROM
+        article AS a ,
+        tag AS t,
+        user AS u
+        <where>
+            <if test="queryString!=null and queryString!='' ">
+                AND a.article_title LIKE '%${queryString}%'
+            </if>
+            AND a.article_tag_id = t.tag_id
+            AND a.article_user_id = u.user_id
+            AND a.article_status != 3
+            limit #{start},#{size}
+        </where>
+    </select>
+
+
+</mapper>
